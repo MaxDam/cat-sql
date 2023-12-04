@@ -1,10 +1,10 @@
 {
     "name": "Cat Sql",
     "version": "0.0.1",
-    "description": "Description of cat_sql.",
-    "author_name": "Me",
-    "author_url": "https://mywebsite.me",
-    "plugin_url": "https://github.com/my_name/cat_sql",
-    "tags": "cat, template, example",
-    "thumb": "https://raw.githubusercontent.com/my_repo_path/cat_sql.png"
+    "description": "the cat has learned the sql language to query databases",
+    "author_name": "Massimiliano D'Amico",
+    "author_url": "https://www.linkedin.com/in/massimilianodamico",
+    "plugin_url": "https://github.com/MaxDam/cat-sql",
+    "tags": "cheshirecat, template, sql",
+    "thumb": "https://maxdam.github.io/cat-sql/img/thumb.jpg"
 }
