@@ -1,4 +1,4 @@
-# Cat SQL
+# Cat SQL Agent
 the cat has learned the sql language to query databases
 
 <img src="./img/thumb.jpg" width=600>
