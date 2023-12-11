@@ -1,5 +1,5 @@
-# Cat SQL Agent
-the cat has learned the sql language to query databases
+# Query Cat
+The cat is a special agent who knows the SQL language to query databases.
 
 <img src="./img/thumb.jpg" width=600>
 <br><br>
