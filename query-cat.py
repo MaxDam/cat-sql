@@ -2,12 +2,15 @@ from cat.mad_hatter.decorators import tool, hook, plugin
 from pydantic import BaseModel
 from datetime import datetime, date
 
+from langchain.llms.base import BaseLLM
+from langchain.chat_models.base import BaseChatModel
+
 from langchain.agents import create_sql_agent 
 from langchain.agents.agent_toolkits import SQLDatabaseToolkit 
 from langchain.sql_database import SQLDatabase 
 from langchain.agents.agent_types import AgentType
-from langchain.callbacks.streaming_stdout_final_only import FinalStreamingStdOutCallbackHandler
-
+from typing import Dict, Optional
+from .callbacks import NewFinalTokenHandler
 
 
 class MySettings(BaseModel):
@@ -22,22 +25,6 @@ class MySettings(BaseModel):
 def settings_schema():   
     return MySettings.schema()
 
-@tool
-def get_the_day(tool_input, cat):
-    """Get the day of the week. Input is always None."""
-
-    dt = datetime.now()
-
-    return dt.strftime('%A')
-
-@hook
-def before_cat_sends_message(message, cat):
-
-    prompt = f'Rephrase the following sentence in a grumpy way: {message["content"]}'
-    message["content"] = cat.llm(prompt)
-
-    return message
-
 
 @hook
 def agent_fast_reply(fast_reply, cat) -> Dict:
@@ -49,20 +36,35 @@ def agent_fast_reply(fast_reply, cat) -> Dict:
     db = SQLDatabase.from_uri(pg_uri)
 
     #gpt = OpenAI(streaming=True, callbacks=[FinalStreamingStdOutCallbackHandler()], temperature=0)
+    #response = cat._llm.generate(prompt, callbacks=[NewFinalTokenHandler(cat)])
 
-    sql_db_tlk = SQLDatabaseToolkit(db=db, llm=cat._llm)
+    sqldbtlk = SQLDatabaseToolkit(db=db, llm=_llm)
 
     agent_executor = create_sql_agent(
-        llm=cat._llm,
-        toolkit=sql_db_tlk,
+        llm=_llm,
+        toolkit=sqldbtlk,
         verbose=True,
         agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     )
 
-    question = "Average rent in Chicago from Oct 2022 till Dec 2022"
-    agent_executor.run(question)
+    user_message = cat.working_memory["user_message_json"]["text"]
+    agent_executor.run(user_message)
     
+    response = ""
     if return_direct:
         return { "output": response } 
     
     return fast_reply
+
+
+# Call llm with agent callback for streaming
+def _llm(self, prompt: str, stream: bool = False) -> str:
+    callbacks = []
+    if stream:
+        callbacks.append(NewFinalTokenHandler(self))
+
+    if isinstance(self._llm, BaseLLM):
+        return self._llm(prompt, callbacks=callbacks)
+
+    if isinstance(self._llm, BaseChatModel):
+        return self._llm.call_as_llm(prompt, callbacks=callbacks)
