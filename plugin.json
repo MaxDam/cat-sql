@@ -1,10 +1,10 @@
 {
-    "name": "Cat Sql Agent",
+    "name": "Query Cat",
     "version": "0.0.1",
-    "description": "the cat is a special agent who knows the SQL language to query databases",
+    "description": "The cat is a special agent who knows the SQL language to query databases.",
     "author_name": "Massimiliano D'Amico",
     "author_url": "https://www.linkedin.com/in/massimilianodamico",
-    "plugin_url": "https://github.com/MaxDam/cat-sql-agent",
+    "plugin_url": "https://github.com/MaxDam/query-cat",
     "tags": "cheshirecat, sql, agent",
-    "thumb": "https://maxdam.github.io/cat-sql-agent/img/thumb.jpg"
+    "thumb": "https://maxdam.github.io/query-cat/img/thumb.jpg"
 }
