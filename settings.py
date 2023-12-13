@@ -12,15 +12,8 @@ connections = {
     "SQLite": "sqlite:///{host}"
 }
 
-#DatabaseType = Enum("DatabaseType", list(connections.keys()))
+# Create dynamic enum for database types
 DatabaseType = Enum("DatabaseType", [(str(hash(key)), key) for key, value in connections.items()])
-
-
-'''# Create dynamic enum
-class DatabaseType(Enum):
-    pass
-for index, (key, value) in enumerate(connections.items()):
-    setattr(DatabaseType, chr(ord('a') + index), value)'''
 
 
 class MySettings(BaseModel):
