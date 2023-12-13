@@ -24,31 +24,17 @@ def settings_schema():
     return MySettings.schema()
 
 
+
 @hook
 def agent_fast_reply(fast_reply, cat) -> Dict:
     
     return_direct = True
     
-    # Acquire settings
-    settings = cat.mad_hatter.get_plugin().load_settings()
-    
-    # Init database connection
-    db = SQLDatabase.from_uri(settings["conn_str"])
-
-    # Create SQL DB Toolkit
-    sqldbtlk = SQLDatabaseToolkit(db=db, llm=cat._llm)
-
-    # Create SQL Agent
-    agent_executor = create_sql_agent(
-        llm=cat._llm,
-        toolkit=sqldbtlk,
-        verbose=True,
-        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    )
-
-    # Execute Agent
+    # Get user message
     user_message = cat.working_memory["user_message_json"]["text"]
-    final_thought = agent_executor.run(user_message)
+    
+    # Obtain thought from a reasoning agent
+    thought = reasoning_sql_agent(cat)
 
     # Get prompt
     prefix = cat.mad_hatter.execute_hook("agent_prompt_prefix", '', cat=cat)
@@ -66,9 +52,8 @@ def agent_fast_reply(fast_reply, cat) -> Dict:
     reply to the user briefly, 
     precisely and based on the context 
     of the dialogue.
-    ## Conversation until now:{chat_history}
     - Human: {user_message}
-    - Thought: {final_thought}
+    - Thought: {thought}
     - AI:"""
 
     # Obtain final and contestual response
@@ -79,3 +64,31 @@ def agent_fast_reply(fast_reply, cat) -> Dict:
         return { "output": response }
     
     return fast_reply
+
+
+# Execute agent to get a final thought after sql query based reasoning
+def reasoning_sql_agent(cat):
+
+    # Get user message
+    user_message = cat.working_memory["user_message_json"]["text"]
+
+    # Acquire settings
+    settings = cat.mad_hatter.get_plugin().load_settings()
+    
+    # Init database connection
+    db = SQLDatabase.from_uri(settings["conn_str"])
+
+    # Create SQL DB Toolkit
+    sqldbtlk = SQLDatabaseToolkit(db=db, llm=cat._llm)
+
+    # Create SQL Agent
+    agent_executor = create_sql_agent(
+        llm=cat._llm,
+        toolkit=sqldbtlk,
+        verbose=True,
+        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    )
+
+    # Obtain final thought, after agent reasoning steps
+    final_thought = agent_executor.run(user_message)
+    return final_thought
