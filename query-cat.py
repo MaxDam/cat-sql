@@ -1,42 +1,28 @@
 from cat.mad_hatter.decorators import tool, hook, plugin
-from pydantic import BaseModel
-from datetime import datetime, date
+from pydantic import BaseModel, Field, ValidationError, field_validator
+
 
 from langchain.agents import create_sql_agent 
 from langchain.agents.agent_toolkits import SQLDatabaseToolkit 
 from langchain.sql_database import SQLDatabase 
 from langchain.agents.agent_types import AgentType
-from langchain.callbacks.streaming_stdout_final_only import FinalStreamingStdOutCallbackHandler
-
+from typing import Dict, Optional
 
 
 class MySettings(BaseModel):
-    required_int: int
-    optional_int: int = 69
-    required_str: str
-    optional_str: str = "meow"
-    required_date: date
-    optional_date: date = 1679616000
+    conn_str: str = Field(
+        title="connection string",
+        #default="postgresql://postgres:postgres@host.docker.internal:5432/postgres"
+        default="mysql+mysqlconnector://root:root@host.docker.internal:3306/mydb"
+    )
+@plugin
+def settings_schema():   
+    return MySettings.schema()
 
 @plugin
 def settings_schema():   
     return MySettings.schema()
 
-@tool
-def get_the_day(tool_input, cat):
-    """Get the day of the week. Input is always None."""
-
-    dt = datetime.now()
-
-    return dt.strftime('%A')
-
-@hook
-def before_cat_sends_message(message, cat):
-
-    prompt = f'Rephrase the following sentence in a grumpy way: {message["content"]}'
-    message["content"] = cat.llm(prompt)
-
-    return message
 
 
 @hook
@@ -44,25 +30,65 @@ def agent_fast_reply(fast_reply, cat) -> Dict:
     
     return_direct = True
     
-    # ...
-    pg_uri = f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{mydatabase}"
-    db = SQLDatabase.from_uri(pg_uri)
+    # Get user message
+    user_message = cat.working_memory["user_message_json"]["text"]
+    
+    # Obtain thought from a reasoning agent
+    thought = reasoning_sql_agent(cat)
 
-    #gpt = OpenAI(streaming=True, callbacks=[FinalStreamingStdOutCallbackHandler()], temperature=0)
+    # Get prompt
+    prefix = cat.mad_hatter.execute_hook("agent_prompt_prefix", '', cat=cat)
 
-    sql_db_tlk = SQLDatabaseToolkit(db=db, llm=cat._llm)
+    # Get user message and chat history
+    chat_history = cat.agent_manager.agent_prompt_chat_history(
+        cat.working_memory["history"]
+    )
+    
+    # Prompt
+    prompt = f"""{prefix}
+    You have elaborated the user's question, 
+    you have searched for the answer and now you 
+    have the solution in your Thought; 
+    reply to the user briefly, 
+    precisely and based on the context 
+    of the dialogue.
+    - Human: {user_message}
+    - Thought: {thought}
+    - AI:"""
 
+    # Obtain final and contestual response
+    response = cat.llm(prompt)
+    
+    # Manage response
+    if return_direct:
+        return { "output": response }
+    
+    return fast_reply
+
+
+# Execute agent to get a final thought after sql query based reasoning
+def reasoning_sql_agent(cat):
+
+    # Get user message
+    user_message = cat.working_memory["user_message_json"]["text"]
+
+    # Acquire settings
+    settings = cat.mad_hatter.get_plugin().load_settings()
+    
+    # Init database connection
+    db = SQLDatabase.from_uri(settings["conn_str"])
+
+    # Create SQL DB Toolkit
+    sqldbtlk = SQLDatabaseToolkit(db=db, llm=cat._llm)
+
+    # Create SQL Agent
     agent_executor = create_sql_agent(
         llm=cat._llm,
-        toolkit=sql_db_tlk,
+        toolkit=sqldbtlk,
         verbose=True,
         agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     )
 
-    question = "Average rent in Chicago from Oct 2022 till Dec 2022"
-    agent_executor.run(question)
-    
-    if return_direct:
-        return { "output": response } 
-    
-    return fast_reply
+    # Obtain final thought, after agent reasoning steps
+    final_thought = agent_executor.run(user_message)
+    return final_thought
