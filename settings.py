@@ -3,23 +3,49 @@ from pydantic import BaseModel, Field
 from enum import Enum
 from cat.log import log
 
-connections = {
-    "PostgreSQL" : "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
-    "MySQL": "mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}",
-    "Oracle": "oracle://{username}:{password}@{host}:{port}/{database}",
-    "Microsoft SQL Server": "mssql+pymssql://scott:{host}@{host}:{port}/{database}",
-    "Microsoft SQL Server ODBC": "mssql+pyodbc://{username}:{password}@{database}",
-    "SQLite": "sqlite:///{host}"
+datasources = {
+    "PostgreSQL" : {
+        "agent_type": "sql",
+        "conn_str": "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}"
+    },
+    "MySQL": {
+        "agent_type": "sql",
+        "conn_str": "mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}"
+    },
+    "Oracle": {
+        "agent_type": "sql",
+        "conn_str": "oracle://{username}:{password}@{host}:{port}/{database}"
+    },
+    "Microsoft SQL Server": {
+        "agent_type": "sql",
+        "conn_str": "mssql+pymssql://scott:{host}@{host}:{port}/{database}"
+    },
+    "Microsoft SQL Server ODBC": {
+        "agent_type": "sql",
+        "conn_str": "mssql+pyodbc://{username}:{password}@{database}"
+    },
+    "SQLite": {
+        "agent_type": "sql",
+        "conn_str": "sqlite:///{host}"
+    },
+    "CSV": {
+        "agent_type": "csv"
+    },
+    "JSON": {
+        "agent_type": "json"
+    }
 }
 
 # Create dynamic enum for database types
-DatabaseType = Enum("DatabaseType", [(str(hash(key)), key) for key, value in connections.items()])
-
+DatasourceType = Enum("DatasourceType", [(key.replace(" ", "_"), key) for key, _ in datasources.items()])
 
 class MySettings(BaseModel):
-    database_type: DatabaseType
+    ds_type: DatasourceType = Field(
+        title="datasource type",
+        default=""
+    )
     host: str = Field(
-        title="host",
+        title="host or file path",
         default=""
     )
     port: int = Field(
@@ -36,6 +62,10 @@ class MySettings(BaseModel):
     )
     database: str = Field(
         title="database",
+        default=""
+    )
+    extra: str = Field(
+        title="extra",
         default=""
     )
 

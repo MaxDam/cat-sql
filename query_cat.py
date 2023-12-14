@@ -1,6 +1,6 @@
 from cat.mad_hatter.decorators import tool, hook, plugin
 from typing import Dict
-from .query_agent import reasoning_sql_agent
+from .query_agent import reasoning_agent
 from cat.log import log
 
 @hook
@@ -12,15 +12,15 @@ def agent_fast_reply(fast_reply, cat) -> Dict:
     user_message = cat.working_memory["user_message_json"]["text"]
     
     # Obtain thought from a reasoning agent
-    thought = reasoning_sql_agent(cat)
+    thought = reasoning_agent(cat)
 
     # Get prompt
     prefix = cat.mad_hatter.execute_hook("agent_prompt_prefix", '', cat=cat)
 
-    # Get user message and chat history
+    '''# Get user message and chat history
     chat_history = cat.agent_manager.agent_prompt_chat_history(
         cat.working_memory["history"]
-    )
+    )'''
     
     # Prompt
     prompt = f"""{prefix}
@@ -42,6 +42,3 @@ def agent_fast_reply(fast_reply, cat) -> Dict:
         return { "output": response }
     
     return fast_reply
-
-
-
