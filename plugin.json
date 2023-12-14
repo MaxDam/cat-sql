@@ -1,10 +1,10 @@
 {
     "name": "Query Cat",
     "version": "0.0.1",
-    "description": "The cat is a special agent that knows how to query your data from different types of databases, CSV, JSON etc..",
+    "description": "The cat is a special agent that knows how to query your data from different types of Databases, CSV, JSON etc..",
     "author_name": "Massimiliano D'Amico",
     "author_url": "https://www.linkedin.com/in/massimilianodamico",
     "plugin_url": "https://github.com/MaxDam/query-cat",
-    "tags": "cheshirecat, sql, agent",
+    "tags": "cheshirecat, sql, csv, json, agent",
     "thumb": "https://maxdam.github.io/query-cat/img/thumb.jpg"
 }
