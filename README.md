@@ -1,5 +1,5 @@
 # Query Cat
-The cat is a special agent that knows how to query your data from different types of databases, CSV, JSON etc..
+The cat is a special agent that knows how to query your data from different types of Databases, CSV, JSON etc..
 
 <img src="./img/thumb.jpg" width=400>
 <br><br>
