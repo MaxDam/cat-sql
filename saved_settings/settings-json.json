@@ -1,0 +1,9 @@
+{
+    "host": "/app/cat/plugins/query-cat/data_examples/products.json",
+    "port": "",
+    "username": "",
+    "password": "",
+    "database": "",
+    "ds_type": "JSON",
+    "extra": ""
+}

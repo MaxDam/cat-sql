@@ -4,8 +4,11 @@ from langchain_experimental.agents.agent_toolkits.csv.base import create_csv_age
 from langchain.agents.agent_toolkits import SQLDatabaseToolkit 
 from langchain.sql_database import SQLDatabase 
 from langchain.agents.agent_types import AgentType
+from langchain.tools.json.tool import JsonSpec
+from langchain.agents.agent_toolkits import JsonToolkit
 from .settings import datasources
 from cat.log import log
+import json
 
 
 # Execute agent to get a final thought, based on the type 
@@ -70,10 +73,10 @@ def _reasoning_csv_agent(cat, user_message, settings):
     csv_file_path = settings["host"]
     delimiter = settings["extra"] if settings["extra"].strip() else ";"
 
-    # Create CSV
+    # Create CSV agent
     try:
         #agent_executor = create_csv_agent(cat._llm, csv_file_path, verbose=True)
-        agent_executor = create_csv_agent(cat._llmllm, csv_file_path, pandas_kwargs={'delimiter': delimiter}, verbose=True)
+        agent_executor = create_csv_agent(cat._llm, csv_file_path, pandas_kwargs={'delimiter': delimiter}, verbose=True)
     except Exception as e:
         log.error(f"Failed to create SQL connection: {e}")
         return f"it was not possible to connect to the selected data source: {e}"
@@ -86,12 +89,24 @@ def _reasoning_csv_agent(cat, user_message, settings):
 # Execute json agent
 def _reasoning_json_agent(cat, user_message, settings):
 
-    # Get csv file path
+    # Get json file path
     json_file_path = settings["host"]
 
-    # Create CSV
+    # Get json data
+    with open(json_file_path, 'r') as reader:
+        data = json.load(reader)
+
+    # Create JSON toolkit
+    json_spec = JsonSpec(dict_= data, max_value_length=4000)
+    json_toolkit = JsonToolkit(spec=json_spec)
+
+    # Create JSON agent
     try:
-        agent_executor = create_json_agent(cat._llm, json_file_path, verbose=True)
+        agent_executor = create_json_agent(
+            llm=cat._llm,
+            toolkit=json_toolkit,
+            verbose=True
+        )
     except Exception as e:
         log.error(f"Failed to create SQL connection: {e}")
         return f"it was not possible to connect to the selected data source: {e}"
