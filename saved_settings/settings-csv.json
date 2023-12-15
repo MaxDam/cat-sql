@@ -1,0 +1,9 @@
+{
+    "host": "/app/cat/plugins/query-cat/data_examples/products.csv",
+    "port": "",
+    "username": "",
+    "password": "",
+    "database": "",
+    "ds_type": "CSV",
+    "extra": ""
+}

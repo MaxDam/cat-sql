@@ -1,0 +1,182 @@
+[
+    {
+        "product_name": "Laptop",
+        "price": 999.99,
+        "category": "Electronics",
+        "description": "High-performance laptop with advanced features."
+    },
+    {
+        "product_name": "Smartphone",
+        "price": 599.99,
+        "category": "Electronics",
+        "description": "Latest smartphone model with cutting-edge technology."
+    },
+    {
+        "product_name": "Headphones",
+        "price": 149.99,
+        "category": "Accessories",
+        "description": "Noise-canceling headphones for an immersive audio experience."
+    },
+    {
+        "product_name": "Tablet",
+        "price": 299.99,
+        "category": "Electronics",
+        "description": "10-inch Android tablet with a sleek design."
+    },
+    {
+        "product_name": "Smartwatch",
+        "price": 199.99,
+        "category": "Electronics",
+        "description": "Smartwatch with fitness tracking and notifications."
+    },
+    {
+        "product_name": "Wireless Mouse",
+        "price": 29.99,
+        "category": "Accessories",
+        "description": "Ergonomic wireless mouse for comfortable use."
+    },
+    {
+        "product_name": "Bluetooth Speaker",
+        "price": 79.99,
+        "category": "Accessories",
+        "description": "Portable Bluetooth speaker for on-the-go entertainment."
+    },
+    {
+        "product_name": "Gaming Laptop",
+        "price": 1499.99,
+        "category": "Electronics",
+        "description": "High-end gaming laptop with dedicated graphics."
+    },
+    {
+        "product_name": "Camera",
+        "price": 499.99,
+        "category": "Electronics",
+        "description": "Mirrorless digital camera for professional photography."
+    },
+    {
+        "product_name": "Printer",
+        "price": 129.99,
+        "category": "Electronics",
+        "description": "Color inkjet printer for home and office use."
+    },
+    {
+        "product_name": "External Hard Drive",
+        "price": 79.99,
+        "category": "Accessories",
+        "description": "500GB external hard drive for data storage."
+    },
+    {
+        "product_name": "Fitness Tracker",
+        "price": 59.99,
+        "category": "Electronics",
+        "description": "Wearable fitness tracker to monitor health and activity."
+    },
+    {
+        "product_name": "Desk Chair",
+        "price": 89.99,
+        "category": "Furniture",
+        "description": "Comfortable desk chair for long hours of work."
+    },
+    {
+        "product_name": "Coffee Maker",
+        "price": 49.99,
+        "category": "Appliances",
+        "description": "Drip coffee maker for brewing your favorite coffee at home."
+    },
+    {
+        "product_name": "Toaster",
+        "price": 19.99,
+        "category": "Appliances",
+        "description": "2-slice toaster for quick and easy breakfast."
+    },
+    {
+        "product_name": "Blender",
+        "price": 39.99,
+        "category": "Appliances",
+        "description": "Powerful blender for smoothies and food preparation."
+    },
+    {
+        "product_name": "Microwave",
+        "price": 69.99,
+        "category": "Appliances",
+        "description": "Compact microwave oven for fast and efficient cooking."
+    },
+    {
+        "product_name": "Dumbbells Set",
+        "price": 49.99,
+        "category": "Fitness",
+        "description": "Set of dumbbells for strength training workouts."
+    },
+    {
+        "product_name": "Yoga Mat",
+        "price": 19.99,
+        "category": "Fitness",
+        "description": "Non-slip yoga mat for yoga and exercise routines."
+    },
+    {
+        "product_name": "Running Shoes",
+        "price": 79.99,
+        "category": "Fitness",
+        "description": "High-performance running shoes for active lifestyles."
+    },
+    {
+        "product_name": "Backpack",
+        "price": 39.99,
+        "category": "Accessories",
+        "description": "Stylish backpack for daily commuting and travel."
+    },
+    {
+        "product_name": "Office Desk",
+        "price": 129.99,
+        "category": "Furniture",
+        "description": "Spacious office desk for a productive workspace."
+    },
+    {
+        "product_name": "Desk Lamp",
+        "price": 24.99,
+        "category": "Accessories",
+        "description": "Adjustable desk lamp for focused lighting."
+    },
+    {
+        "product_name": "HD TV",
+        "price": 499.99,
+        "category": "Electronics",
+        "description": "High-definition television for immersive entertainment."
+    },
+    {
+        "product_name": "Game Console",
+        "price": 299.99,
+        "category": "Electronics",
+        "description": "Gaming console for an exceptional gaming experience."
+    },
+    {
+        "product_name": "Gaming Chair",
+        "price": 149.99,
+        "category": "Furniture",
+        "description": "Comfortable gaming chair with adjustable features."
+    },
+    {
+        "product_name": "Sunglasses",
+        "price": 59.99,
+        "category": "Fashion",
+        "description": "Stylish sunglasses for a fashionable look."
+    },
+    {
+        "product_name": "Watch",
+        "price": 129.99,
+        "category": "Fashion",
+        "description": "Elegant wristwatch for a sophisticated appearance."
+    },
+    {
+        "product_name": "Winter Jacket",
+        "price": 89.99,
+        "category": "Fashion",
+        "description": "Warm and stylish winter jacket for cold weather."
+    },
+    {
+        "product_name": "Hiking Boots",
+        "price": 69.99,
+        "category": "Fashion",
+        "description": "Durable hiking boots for outdoor adventures."
+    }
+]

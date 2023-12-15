@@ -1,0 +1,9 @@
+{
+    "host": "host.docker.internal",
+    "port": 3306,
+    "username": "root",
+    "password": "root",
+    "database": "product_sales",
+    "ds_type": "MySQL",
+    "extra": ""
+}
