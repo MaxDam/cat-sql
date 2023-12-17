@@ -68,6 +68,25 @@ class MySettings(BaseModel):
         title="extra",
         default=""
     )
+    input_prompt: str = Field(
+        title="input prompt",
+        default="""{user_message}""",
+        extra={"type": "TextArea"}
+    )
+    output_prompt: str = Field(
+        title="output prompt",
+        default="""{prompt_prefix}
+        You have elaborated the user's question, 
+        you have searched for the answer and now you 
+        have the solution in your Thought; 
+        reply to the user briefly, 
+        precisely and based on the context 
+        of the dialogue.
+        - Human: {user_message}
+        - Thought: {thought}
+        - AI:""",
+        extra={"type": "TextArea"}
+    )
 
 
 @plugin
