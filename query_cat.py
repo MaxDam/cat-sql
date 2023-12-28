@@ -2,7 +2,6 @@ from cat.mad_hatter.decorators import tool, hook, plugin
 from typing import Dict
 from .query_agent import QueryCatAgent #, reasoning_agent
 from cat.log import log
-from cat.looking_glass.prompts import MAIN_PROMPT_PREFIX
 
 @hook
 def agent_fast_reply(fast_reply, cat) -> Dict:
