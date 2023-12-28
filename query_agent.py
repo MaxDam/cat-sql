@@ -10,7 +10,10 @@ from cat.looking_glass.prompts import MAIN_PROMPT_PREFIX
 from .settings import datasources
 from cat.log import log
 import json
-
+from langchain.prompts.few_shot import FewShotPromptTemplate
+from langchain.prompts.prompt import PromptTemplate
+from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
+from langchain.vectorstores import Qdrant
 
 class QueryCatAgent:
 
@@ -27,16 +30,10 @@ class QueryCatAgent:
     # Execute agent to get a final thought, based on the type 
     def get_reasoning_agent(self) -> str:
         
-        # Set input prompt from settings
-        self.input_prompt = self.user_message
-        if self.settings["input_prompt"] != '':
-            self.input_prompt = self.settings["input_prompt"].format(
-                user_message=self.user_message
-            )
-        print("=====================================================")
-        print(f"Input prompt:\n{self.input_prompt}")
-        print("=====================================================")
-
+        # Set input prompt
+        self.set_input_prompt_with_context()
+        #self.set_input_prompt()
+        
         # Get agent type
         datasource_type = self.settings["ds_type"]
         agent_type = datasources[datasource_type]["agent_type"]
@@ -51,7 +48,64 @@ class QueryCatAgent:
         
         return ""
 
+    # Get agent input prompt with context
+    def set_input_prompt_with_context(self):
+    
+        # Set input prompt from settings
+        if self.settings["examples"] != '':
+            examples = json.loads(self.settings["examples"])
+        
+        # If the json examples is empty..
+        if not examples:
+            return self.set_input_prompt()
 
+        # Create example selector
+        example_selector = SemanticSimilarityExampleSelector.from_examples(
+            examples, 
+            self.cat.embedder, 
+            Qdrant,
+            k=1,
+            location=':memory:'
+        )
+        
+        # Create example prompt
+        example_prompt = PromptTemplate(
+            input_variables=["question", "answer"], 
+            template="Question: {question}\n{answer}"
+        )
+        
+        # Create promptTemplate from examples_selector and example_prompt
+        prompt = FewShotPromptTemplate(
+            example_selector=example_selector,
+            example_prompt=example_prompt,
+            suffix="Question: {input}",
+            input_variables=["input"]
+        )
+
+        # Get prompt
+        self.input_prompt = prompt.format(input=self.user_message)
+
+        print("=====================================================")
+        print(f"Input prompt:\n{self.input_prompt}")
+        print("=====================================================")
+
+        return self.input_prompt
+
+    # Get agent input prompt
+    def set_input_prompt(self):
+    
+        # Set input prompt from settings
+        self.input_prompt = self.user_message
+        if self.settings["input_prompt"] != '':
+            self.input_prompt = self.settings["input_prompt"].format(
+                user_message=self.user_message
+            )
+        print("=====================================================")
+        print(f"Input prompt:\n{self.input_prompt}")
+        print("=====================================================")
+
+        return self.input_prompt
+    
     # Return final response, based on the user's message and reasoning
     def get_final_output(self, thought):
 
