@@ -1,113 +1,124 @@
+from cat.utils import singleton
+from cat.looking_glass.prompts import MAIN_PROMPT_PREFIX
+from cat.log import log
 from langchain.agents import create_sql_agent, create_json_agent
 #from langchain.agents import create_csv_agent
 from langchain_experimental.agents.agent_toolkits.csv.base import create_csv_agent
-from langchain.agents.agent_toolkits import SQLDatabaseToolkit 
+from langchain.agents.agent_toolkits import SQLDatabaseToolkit, JsonToolkit 
 from langchain.sql_database import SQLDatabase 
 from langchain.agents.agent_types import AgentType
 from langchain.tools.json.tool import JsonSpec
-from langchain.agents.agent_toolkits import JsonToolkit
-from cat.looking_glass.prompts import MAIN_PROMPT_PREFIX
-from .settings import datasources
-from cat.log import log
-import json
 from langchain.prompts.few_shot import FewShotPromptTemplate
 from langchain.prompts.prompt import PromptTemplate
 from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
 from langchain.vectorstores import Qdrant
+import json
+from .settings import datasources
 
+@singleton
 class QueryCatAgent:
 
-    def __init__(self, cat):
+    def __init__(self, cat) -> None:
         self.cat = cat
-        
-        # Acquire all settings
-        self.settings = cat.mad_hatter.get_plugin().load_settings()
+        self.settings = None
+
+    # Load configuration from settings
+    def _load_configurations(self):
 
         # Get user message
-        self.user_message = cat.working_memory["user_message_json"]["text"]
+        self.user_message = self.cat.working_memory["user_message_json"]["text"]
 
+        # Acquire settings
+        settings = self.cat.mad_hatter.get_plugin().load_settings()
+
+        # If the settings are the same, skip function
+        if self.settings and self.settings == settings:
+            return
+
+        log.critical("--------- LOAD CONFIGURATION ---")
+
+        # Set settings
+        self.settings = settings
+
+        # Acquire the agent type
+        datasource_type = self.settings["ds_type"]
+        self.agent_type = datasources[datasource_type]["agent_type"]
+
+        # Create prompt_template from examples
+        self.prompt_template = None
+        if self.settings["examples"] != '':
+            
+            # Get examples
+            examples = json.loads(self.settings["examples"])
+            
+            if examples:
+                # Create example selector
+                example_selector = SemanticSimilarityExampleSelector.from_examples(
+                    examples, 
+                    self.cat.embedder, 
+                    Qdrant,
+                    k=1,
+                    location=':memory:'
+                )
+                
+                # Create example prompt
+                example_prompt = PromptTemplate(
+                    input_variables=["question", "answer"], 
+                    template="Question: {question}\n{answer}"
+                )
+                
+                # Create promptTemplate from examples_selector and example_prompt
+                self.prompt_template = FewShotPromptTemplate(
+                    example_selector=example_selector,
+                    example_prompt=example_prompt,
+                    suffix="Question: {input}",
+                    input_variables=["input"]
+                )
 
     # Execute agent to get a final thought, based on the type 
     def get_reasoning_agent(self) -> str:
         
-        # Set input prompt
-        self.set_input_prompt_with_context()
-        #self.set_input_prompt()
-        
-        # Get agent type
-        datasource_type = self.settings["ds_type"]
-        agent_type = datasources[datasource_type]["agent_type"]
+        # Load configuration
+        self._load_configurations()
 
+        # Get input prompt
+        self.input_prompt = self._get_input_prompt()
+        
         # Execute agent based on the type
-        if agent_type == "sql":
+        if self.agent_type == "sql":
             return self._get_reasoning_sql_agent()
-        if agent_type == "csv":
+        if self.agent_type == "csv":
             return self._get_reasoning_csv_agent()
-        if agent_type == "json":
+        if self.agent_type == "json":
             return self._get_reasoning_json_agent()
         
         return ""
 
-    # Get agent input prompt with context
-    def set_input_prompt_with_context(self):
-    
-        # Set input prompt from settings
-        if self.settings["examples"] != '':
-            examples = json.loads(self.settings["examples"])
-        
-        # If the json examples is empty..
-        if not examples:
-            return self.set_input_prompt()
-
-        # Create example selector
-        example_selector = SemanticSimilarityExampleSelector.from_examples(
-            examples, 
-            self.cat.embedder, 
-            Qdrant,
-            k=1,
-            location=':memory:'
-        )
-        
-        # Create example prompt
-        example_prompt = PromptTemplate(
-            input_variables=["question", "answer"], 
-            template="Question: {question}\n{answer}"
-        )
-        
-        # Create promptTemplate from examples_selector and example_prompt
-        prompt = FewShotPromptTemplate(
-            example_selector=example_selector,
-            example_prompt=example_prompt,
-            suffix="Question: {input}",
-            input_variables=["input"]
-        )
-
-        # Get prompt
-        self.input_prompt = prompt.format(input=self.user_message)
-
-        print("=====================================================")
-        print(f"Input prompt:\n{self.input_prompt}")
-        print("=====================================================")
-
-        return self.input_prompt
-
     # Get agent input prompt
-    def set_input_prompt(self):
+    def _get_input_prompt(self):
     
-        # Set input prompt from settings
-        self.input_prompt = self.user_message
-        if self.settings["input_prompt"] != '':
-            self.input_prompt = self.settings["input_prompt"].format(
-                user_message=self.user_message
-            )
+        if self.prompt_template:
+            # Get input prompt from prompt_template
+            input_prompt = self.prompt_template.format(input=self.user_message)
+        else:
+            # Get input prompt from settings
+            input_prompt = self.user_message
+            if self.settings["input_prompt"] != '':
+                input_prompt = self.settings["input_prompt"].format(
+                    user_message=self.user_message
+                )
+
         print("=====================================================")
-        print(f"Input prompt:\n{self.input_prompt}")
+        print(f"Input prompt:\n{input_prompt}")
         print("=====================================================")
 
-        return self.input_prompt
+        return input_prompt
     
     # Return final response, based on the user's message and reasoning
     def get_final_output(self, thought):
+
+        # Load configuration
+        self._load_configurations()
 
         # Get prompt
         prompt_prefix = self.cat.mad_hatter.execute_hook("agent_prompt_prefix", MAIN_PROMPT_PREFIX, cat=self.cat)
