@@ -1,6 +1,6 @@
 {
     "name": "Query Cat",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "The cat is a special agent that knows how to query your data from different types of Databases, CSV, JSON etc..",
     "author_name": "Massimiliano D'Amico",
     "author_url": "https://www.linkedin.com/in/massimilianodamico",
