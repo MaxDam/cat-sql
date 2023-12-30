@@ -196,8 +196,8 @@ class QueryCatAgent:
 
         # Create CSV agent
         try:
-            #agent_executor = create_csv_agent(cat._llm, csv_file_path, verbose=True)
-            agent_executor = create_csv_agent(self.cat._llm, csv_file_path, pandas_kwargs={'delimiter': delimiter}, verbose=True)
+            agent_executor = create_csv_agent(self.cat._llm, csv_file_path, verbose=True)
+            #agent_executor = create_csv_agent(self.cat._llm, csv_file_path, pandas_kwargs={'delimiter': delimiter}, verbose=True)
         except Exception as e:
             log.error(f"Failed to create SQL connection: {e}")
             return f"it was not possible to connect to the selected data source: {e}"
