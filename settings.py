@@ -75,7 +75,7 @@ class MySettings(BaseModel):
     )
     examples: str = Field(
         title="examples",
-        default="{}",
+        default="[]",
         extra={"type": "TextArea"}
     )
     output_prompt: str = Field(

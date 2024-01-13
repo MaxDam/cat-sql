@@ -35,7 +35,7 @@ class QueryCatAgent:
         if self.settings and self.settings == settings:
             return
 
-        log.critical("--------- LOAD CONFIGURATION ---")
+        log.critical("Load configuration..")
 
         # Set settings
         self.settings = settings
@@ -113,7 +113,7 @@ class QueryCatAgent:
         print("=====================================================")
 
         return input_prompt
-    
+
     # Return final response, based on the user's message and reasoning
     def get_final_output(self, thought):
 
