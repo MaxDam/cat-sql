@@ -73,8 +73,17 @@ class MySettings(BaseModel):
         default="""{user_message}""",
         extra={"type": "TextArea"}
     )
-    examples: str = Field(
-        title="examples",
+    training: bool = Field(
+        title="training",
+        default=False
+    )
+    query_examples: str = Field(
+        title="query_examples",
+        default="[]",
+        extra={"type": "TextArea"}
+    )
+    ddl_examples: str = Field(
+        title="ddl_examples",
         default="[]",
         extra={"type": "TextArea"}
     )
