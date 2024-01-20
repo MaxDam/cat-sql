@@ -73,11 +73,6 @@ class MySettings(BaseModel):
         default="""{user_message}""",
         extra={"type": "TextArea"}
     )
-    examples: str = Field(
-        title="examples",
-        default="{}",
-        extra={"type": "TextArea"}
-    )
     output_prompt: str = Field(
         title="output prompt",
         default="""{prompt_prefix}

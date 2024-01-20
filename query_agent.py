@@ -1,6 +1,10 @@
 from cat.utils import singleton
 from cat.looking_glass.prompts import MAIN_PROMPT_PREFIX
 from cat.log import log
+
+import json
+from .settings import datasources
+
 from langchain.agents import create_sql_agent, create_json_agent
 #from langchain.agents import create_csv_agent
 from langchain_experimental.agents.agent_toolkits.csv.base import create_csv_agent
@@ -8,12 +12,16 @@ from langchain.agents.agent_toolkits import SQLDatabaseToolkit, JsonToolkit
 from langchain.sql_database import SQLDatabase 
 from langchain.agents.agent_types import AgentType
 from langchain.tools.json.tool import JsonSpec
+
 from langchain.prompts.few_shot import FewShotPromptTemplate
 from langchain.prompts.prompt import PromptTemplate
 from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
 from langchain.vectorstores import Qdrant
-import json
-from .settings import datasources
+
+from langchain.schema.document import Document
+from langchain.chains import RetrievalQA
+from langchain.agents import Tool
+from typing import Sequence
 
 @singleton
 class QueryCatAgent:
@@ -22,11 +30,9 @@ class QueryCatAgent:
         self.cat = cat
         self.settings = None
 
-    # Load configuration from settings
-    def _load_configurations(self):
 
-        # Get user message
-        self.user_message = self.cat.working_memory["user_message_json"]["text"]
+    # Load configurations
+    def _load_configurations(self):
 
         # Acquire settings
         settings = self.cat.mad_hatter.get_plugin().load_settings()
@@ -35,50 +41,16 @@ class QueryCatAgent:
         if self.settings and self.settings == settings:
             return
 
-        log.critical("--------- LOAD CONFIGURATION ---")
+        log.critical("Load query examples..")
 
         # Set settings
         self.settings = settings
 
-        # Acquire the agent type
-        datasource_type = self.settings["ds_type"]
-        self.agent_type = datasources[datasource_type]["agent_type"]
-
-        # Create prompt_template from examples
-        self.prompt_template = None
-        if self.settings["examples"] != '':
-            
-            # Get examples
-            examples = json.loads(self.settings["examples"])
-            
-            if examples:
-                # Create example selector
-                example_selector = SemanticSimilarityExampleSelector.from_examples(
-                    examples, 
-                    self.cat.embedder, 
-                    Qdrant,
-                    k=1,
-                    location=':memory:'
-                )
-                
-                # Create example prompt
-                example_prompt = PromptTemplate(
-                    input_variables=["question", "answer"], 
-                    template="Question: {question}\n{answer}"
-                )
-                
-                # Create promptTemplate from examples_selector and example_prompt
-                self.prompt_template = FewShotPromptTemplate(
-                    example_selector=example_selector,
-                    example_prompt=example_prompt,
-                    suffix="Question: {input}",
-                    input_variables=["input"]
-                )
 
     # Execute agent to get a final thought, based on the type 
     def get_reasoning_agent(self) -> str:
         
-        # Load configuration
+        # Load configurations
         self._load_configurations()
 
         # Get input prompt
@@ -94,30 +66,35 @@ class QueryCatAgent:
         
         return ""
 
+
     # Get agent input prompt
     def _get_input_prompt(self):
     
-        if self.prompt_template:
-            # Get input prompt from prompt_template
-            input_prompt = self.prompt_template.format(input=self.user_message)
-        else:
-            # Get input prompt from settings
-            input_prompt = self.user_message
-            if self.settings["input_prompt"] != '':
-                input_prompt = self.settings["input_prompt"].format(
-                    user_message=self.user_message
-                )
+        # Get user message
+        self.user_message = self.cat.working_memory["user_message_json"]["text"]
+
+        # Acquire the agent type
+        datasource_type = self.settings["ds_type"]
+        self.agent_type = datasources[datasource_type]["agent_type"]
+
+        # Get input prompt from settings
+        input_prompt = self.user_message
+        if self.settings["input_prompt"] != '':
+            input_prompt = self.settings["input_prompt"].format(
+                user_message=self.user_message
+            )
 
         print("=====================================================")
         print(f"Input prompt:\n{input_prompt}")
         print("=====================================================")
 
         return input_prompt
-    
+
+
     # Return final response, based on the user's message and reasoning
     def get_final_output(self, thought):
 
-        # Load configuration
+        # Load configurations
         self._load_configurations()
 
         # Get prompt
@@ -173,10 +150,10 @@ class QueryCatAgent:
 
             # Create SQL Agent
             agent_executor = create_sql_agent(
-                llm=self.cat._llm,
-                toolkit=sqldbtlk,
-                verbose=True,
-                agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+                llm         = self.cat._llm,
+                toolkit     = sqldbtlk,
+                verbose     = True,
+                agent_type  = AgentType.ZERO_SHOT_REACT_DESCRIPTION
             )
         except Exception as e:
             log.error(f"Failed to create SQL connection: {e}")
