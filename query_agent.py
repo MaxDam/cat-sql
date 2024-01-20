@@ -26,8 +26,6 @@ from typing import Sequence
 @singleton
 class QueryCatAgent:
 
-    TRAINING_KEY = "query_cat_training_mode"
-
     def __init__(self, cat) -> None:
         self.cat = cat
         self.settings = None
@@ -47,112 +45,6 @@ class QueryCatAgent:
 
         # Set settings
         self.settings = settings
-
-        self._load_query_examples()
-        self._load_ddl_examples()
-
-
-    # Load query examples from settings
-    def _load_query_examples(self):
-
-        # Get user message
-        self.user_message = self.cat.working_memory["user_message_json"]["text"]
-
-        # Acquire the agent type
-        datasource_type = self.settings["ds_type"]
-        self.agent_type = datasources[datasource_type]["agent_type"]
-
-        # Create prompt_template from examples
-        self.query_prompt_tpl = None
-        if self.settings["query_examples"] != '':
-            
-            # Get query examples
-            query_examples = json.loads(self.settings["query_examples"])
-
-            if query_examples:
-                # Create query_example selector
-                query_example_selector = SemanticSimilarityExampleSelector.from_examples(
-                    query_examples, 
-                    self.cat.embedder, 
-                    Qdrant,
-                    k=1,
-                    collection_name='query_examples',
-                    location=':memory:'
-                )
-                
-                # Create example prompt
-                query_example_prompt = PromptTemplate(
-                    input_variables=["question", "answer"], 
-                    template="Question: {question}\n{answer}"
-                )
-                
-                # Create query_prompt_tpl from examples_selector and example_prompt
-                self.query_prompt_tpl = FewShotPromptTemplate(
-                    example_selector = query_example_selector,
-                    example_prompt   = query_example_prompt,
-                    suffix="Question: {input}",
-                    input_variables=["input"]
-                )
-
-
-    # Load ddl examples from settings
-    def _load_ddl_examples(self):
-        
-        '''
-        # Get ddl examples
-        ddl_examples = [
-            {"ddl": "<ddl description 1>", "metadata": {"attr1": "value 1", "attr2": "value 2"}},
-            {"ddl": "<ddl description 2>", "metadata": {"attr1": "value 1", "attr2": "value 2"}},
-            # ...
-        ]
-        '''
-
-        # Create prompt_template from examples
-        self.additional_tools = []
-        if self.settings["ddl_examples"] != '':
-
-            # Get ddl examples
-            ddl_examples = json.loads(self.settings["ddl_examples"])
-            
-            if ddl_examples:
-            
-                # Transform json to Document array
-                data_ddl = [
-                    Document(page_content=item["ddl"], metadata=item["metadata"])
-                    for item in ddl_examples
-                ]
-
-                # Create DocSearch
-                ddl_docsearch = Qdrant.from_documents(
-                    data_ddl, 
-                    self.cat._embedding, 
-                    collection_name="ddl_examples",
-                    location=":memory:"
-                )
-
-                # Get Retrieval chain
-                ddl_retrieval_chain = RetrievalQA.from_chain_type(
-                    llm=self.cat._llm, 
-                    chain_type="stuff", 
-                    retriever=ddl_docsearch.as_retriever()
-                )
-
-                # Set Tool description
-                ddl_tool_name = "DDL Explanation"
-                ddl_tool_description = """
-                useful for when you need to know the details 
-                of a particular sql entity present in the database.
-                """
-
-                # Create Retrieval Tool
-                ddl_retrieval_tool = Tool(
-                    func=ddl_retrieval_chain.run,
-                    name=ddl_tool_name,
-                    description=ddl_tool_description,
-                )
-
-                # Add tool in additional_tools array
-                self.additional_tools = [ddl_retrieval_tool]
 
 
     # Execute agent to get a final thought, based on the type 
@@ -178,16 +70,19 @@ class QueryCatAgent:
     # Get agent input prompt
     def _get_input_prompt(self):
     
-        if self.query_prompt_tpl:
-            # Get input prompt from query_prompt_tpl
-            input_prompt = self.query_prompt_tpl.format(input=self.user_message)
-        else:
-            # Get input prompt from settings
-            input_prompt = self.user_message
-            if self.settings["input_prompt"] != '':
-                input_prompt = self.settings["input_prompt"].format(
-                    user_message=self.user_message
-                )
+        # Get user message
+        self.user_message = self.cat.working_memory["user_message_json"]["text"]
+
+        # Acquire the agent type
+        datasource_type = self.settings["ds_type"]
+        self.agent_type = datasources[datasource_type]["agent_type"]
+
+        # Get input prompt from settings
+        input_prompt = self.user_message
+        if self.settings["input_prompt"] != '':
+            input_prompt = self.settings["input_prompt"].format(
+                user_message=self.user_message
+            )
 
         print("=====================================================")
         print(f"Input prompt:\n{input_prompt}")
@@ -258,8 +153,7 @@ class QueryCatAgent:
                 llm         = self.cat._llm,
                 toolkit     = sqldbtlk,
                 verbose     = True,
-                agent_type  = AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-                extra_tools = self.additional_tools
+                agent_type  = AgentType.ZERO_SHOT_REACT_DESCRIPTION
             )
         except Exception as e:
             log.error(f"Failed to create SQL connection: {e}")
@@ -318,30 +212,3 @@ class QueryCatAgent:
         # Obtain final thought, after agent reasoning steps
         final_thought = agent_executor.run(self.input_prompt)
         return final_thought
-
-
-    #############################
-    ######### TRAINING ##########
-    #############################
-
-    # Check if is in training mode
-    def training_mode(self):
-
-        # If training is not set, return false
-        if self.settings["training"] is False:
-            return False
-
-        # Return Training mode state
-        if QueryCatAgent.TRAINING_KEY in self.cat.working_memory.keys():
-            return self.cat.working_memory[QueryCatAgent.TRAINING_KEY]
-        
-        return False
-    
-
-    def add_training_data(self):
-        # Get user message
-        self.user_message = self.cat.working_memory["user_message_json"]["text"]
-
-        #TODO ...
-        
-        return "The data has been acquired"
